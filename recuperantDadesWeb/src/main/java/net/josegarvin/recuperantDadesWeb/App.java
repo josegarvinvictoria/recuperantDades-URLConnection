@@ -1,4 +1,4 @@
-package net.josegarvin.rexuperantDadesWeb;
+package net.josegarvin.recuperantDadesWeb;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
@@ -21,14 +21,18 @@ import javax.imageio.ImageIO;
 public class App {
 
   int numFoto = 0;
-  
-  
+  String patro = null;
+  static String dirSortida = "/home/b4tm4n/FOTOS/";
+
   public static void main(String[] args) {
 
     App program = new App();
 
     // Demanem la ruta al fitxer de contrasenyes.
     String rutaFitxer = program.demanarFitxer();
+    
+    //Demanem la ruta de sortida.
+    //dirSortida = program.demanarDirSortida();
 
     File arxiu = null;
     FileReader fr = null;
@@ -41,15 +45,7 @@ public class App {
       fr = new FileReader(arxiu);
       br = new BufferedReader(fr);
 
-      String liniaRef = br.readLine();
-      int tipusFitxer = program.determinarTipusFitxer(liniaRef);
-
-      if (tipusFitxer == 0) {
-        program.tractarFitxer1(br, mainPage);
-      }
-      if (tipusFitxer == 1) {
-        program.tractarFitxer2(br);
-      }
+      program.tractarFitxer(br, mainPage);
 
     } catch (FileNotFoundException e) {
       // TODO Auto-generated catch block
@@ -61,15 +57,19 @@ public class App {
     }
   }
 
-  public void tractarFitxer1(BufferedReader br, URL mainURL) {
+  public void tractarFitxer(BufferedReader br, URL mainURL) {
+
     String linia;
     try {
+      patro = br.readLine();
+
       while ((linia = br.readLine()) != null) {
+
         String noEspais = eliminarEspais(linia);
         System.out.println();
 
-        String parametres = generarURLParameters(getUsuari(noEspais),
-            getContrasenya(noEspais));
+        String parametres = generarURLParameters(getUsuari(noEspais, patro),
+            getContrasenya(noEspais, patro));
         generarPeticio(mainURL, parametres);
       }
     } catch (IOException e) {
@@ -78,36 +78,51 @@ public class App {
     }
   }
 
-  public void tractarFitxer2(BufferedReader br) {
-    String linia;
-    try {
-      while ((linia = br.readLine()) != null) {
-        System.out.println(eliminarEspais(linia));
+  public String getUsuari(String linia, String patro) {
+    int tipusFitxer = determinarTipusFitxer(patro);
+    if (tipusFitxer == 0) {
+      int posSeparacio = linia.indexOf(":");
+      if(posSeparacio != -1){
+        return linia.substring(0, posSeparacio);
+      }else{
+        return null;
       }
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      
     }
+    if (tipusFitxer == 1) {
+      int posSeparacio = linia.lastIndexOf(":");
+      System.out.println("User---> "
+          + linia.substring(posSeparacio + 1, linia.length()));
+      return linia.substring(posSeparacio + 1, linia.length());
+
+    } else {
+      return null;
+    }
+
   }
 
-  public String getUsuari(String linia) {
-    int posSeparacio = linia.indexOf(":");
-    return linia.substring(0, posSeparacio);
-  }
+  public String getContrasenya(String linia, String patro) {
+    int tipusFitxer = determinarTipusFitxer(patro);
+    if (tipusFitxer == 0) {
+      int posSeparacio = linia.indexOf(":");
+      return linia.substring(posSeparacio + 1, linia.length());
+    }
+    if (tipusFitxer == 1) {
+      int posSeparacio = linia.indexOf(":");
+      System.out.println("PASS---> " + linia.substring(0, posSeparacio));
+      return linia.substring(0, posSeparacio);
+    } else {
+      return "";
+    }
 
-  public String getContrasenya(String linia) {
-    int posSeparacio = linia.indexOf(":");
-    return linia.substring(posSeparacio + 1, linia.length());
   }
 
   public int determinarTipusFitxer(String patro) {
 
     if (patro.equalsIgnoreCase("usuari : contrasenya")) {
-      System.out.println("Patro 0");
       return 0;
     }
     if (patro.equalsIgnoreCase("contrasenya : població : usuari")) {
-      System.out.println("Patro 1");
       return 1;
     } else {
       System.out.println("El fitxer no compleix les condicions d'entrada!");
@@ -119,7 +134,6 @@ public class App {
   public void generarPeticio(URL mainURL, String urlParameters) {
 
     String validationPath = "checklogin.php";
-    
 
     URL url;
     try {
@@ -174,21 +188,20 @@ public class App {
   }
 
   public void descarregarFoto(URL rutaRecurs) {
-    
+
     String dirSortida = "/home/b4tm4n/FOTOS/foto" + numFoto + ".png";
 
     BufferedImage image;
-    
     try {
       image = ImageIO.read(rutaRecurs);
       ImageIO.write(image, "png", new File(dirSortida));
       numFoto++;
     } catch (IOException e) {
       // TODO Auto-generated catch block
-      //e.printStackTrace();
+      // e.printStackTrace();
       System.out.println("No s'ha pogut desar la fotografia.");
     }
-    
+
   }
 
   public String obtenirRutaRecurs(String linia) {
@@ -201,7 +214,6 @@ public class App {
   }
 
   public String generarURLParameters(String user, String pass) {
-   
     String urlParameters = "usuari=" + user + "&contrasenya=" + pass
         + "&Entrar=Entrar";
     return urlParameters;
@@ -215,7 +227,6 @@ public class App {
         liniaNeta += linia.charAt(i);
       }
     }
-
     return liniaNeta;
   }
 
@@ -223,8 +234,27 @@ public class App {
     Scanner lector = new Scanner(System.in);
     System.out.println("Introdueïx la ruta al fitxer de contrasenyes: ");
     String ruta = lector.nextLine();
+    File directori = new File(ruta);
+    while(!directori.exists()){
+      System.out.println("Fitxer inexistent! Torna-hi: ");
+      ruta = lector.nextLine();
+      directori = new File(ruta);
+    }
     lector.close();
     return ruta;
-
+  }
+  
+  public String demanarDirSortida() {
+    Scanner lector = new Scanner(System.in);
+    System.out.println("A on vols desar les fotos?");
+    String ruta = lector.nextLine();
+    File directori = new File(ruta);
+    while(!directori.exists()){
+      System.out.println("Aquest directori no existeix! Torna-hi: ");
+      ruta = lector.nextLine();
+      directori = new File(ruta);
+    }
+    lector.close();
+    return ruta;
   }
 }
