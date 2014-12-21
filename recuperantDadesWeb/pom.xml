@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>net.josegarvin</groupId>
-  <artifactId>rexuperantDadesWeb</artifactId>
+  <artifactId>recuperantDadesWeb</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 

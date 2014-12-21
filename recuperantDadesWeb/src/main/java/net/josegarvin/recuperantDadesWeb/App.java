@@ -45,6 +45,11 @@ public class App {
   private static String dirSortida = "fotos/";
 
   /**
+   * Variable per determinar el path on s'esta executant el programa.
+   */
+  private static File dirActual = new File(".");
+
+  /**
    * Mètode principal del programa.
    * 
    * @param args
@@ -56,9 +61,6 @@ public class App {
 
     // Demanem la ruta al fitxer de contrasenyes.
     String rutaFitxer = program.demanarFitxer();
-
-    // Demanem la ruta de sortida.
-    // dirSortida = program.demanarDirSortida();
 
     File arxiu = null;
     FileReader fr = null;
@@ -72,7 +74,10 @@ public class App {
       br = new BufferedReader(fr);
 
       program.tractarFitxer(br, mainPage);
+      System.out.println();
       System.out.println("S'han descarregat " + numFoto + " fotos.");
+      System.out.println("S'ha creat un nou directori 'fotos' a "
+          + dirActual.getCanonicalPath());
 
     } catch (FileNotFoundException e) {
       // TODO Auto-generated catch block
@@ -220,7 +225,6 @@ public class App {
           .setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
 
       url = new URL(mainURL, validationPath);
-      System.out.println(url.getPath());
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
       connection.setDoOutput(true);
       connection.setDoInput(true);
@@ -238,19 +242,25 @@ public class App {
       wr.close();
 
       int resposta = connection.getResponseCode();
-      System.out.println("Codi de resposta: " + resposta);
 
       BufferedReader in = new BufferedReader(new InputStreamReader(
           connection.getInputStream()));
       String inputLine;
+      boolean fotoTrobada = false;
       while ((inputLine = in.readLine()) != null) {
 
         if (inputLine.contains("img")) {
           String rutaRecurs = obtenirRutaRecurs(inputLine);
           URL rutaAbsolutaRecurs = new URL(url, rutaRecurs);
           descarregarFoto(rutaAbsolutaRecurs);
+          fotoTrobada = true;
+          System.out.println(" ----->S'ha descarregat " + rutaRecurs);
         }
 
+      }
+
+      if (!fotoTrobada) {
+        System.out.println("Login incorrecte! No s'ha trobat cap imatge.");
       }
 
       in.close();
@@ -364,24 +374,4 @@ public class App {
     return ruta;
   }
 
-  /**
-   * Mètode per demanar a l'usuari el directori de sortida de les fotos que es
-   * descarreguin.
-   * 
-   * @return --> Retorna un String corresponent a la ruta de sortida de les
-   *         fotos.
-   */
-  final String demanarDirSortida() {
-    Scanner lector = new Scanner(System.in);
-    System.out.println("A on vols desar les fotos?");
-    String ruta = lector.nextLine();
-    File directori = new File(ruta);
-    while (!directori.exists()) {
-      System.out.println("Aquest directori no existeix! Torna-hi: ");
-      ruta = lector.nextLine();
-      directori = new File(ruta);
-    }
-    lector.close();
-    return ruta;
-  }
 }
