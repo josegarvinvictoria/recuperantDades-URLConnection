@@ -18,21 +18,47 @@ import java.util.Scanner;
 
 import javax.imageio.ImageIO;
 
+/**
+ * Programa que a partir d'un fitxer amb usuaris i contrasenyes es descarrega la
+ * imatge asociada a cadascuna de les credencials d'accès.
+ * 
+ * @author Jose Garvin Victoria.
+ *
+ */
 public class App {
 
-  int numFoto = 0;
-  String patro = null;
-  static String dirSortida = "/home/b4tm4n/FOTOS/";
+  /**
+   * Variable per controlar el numero de fotos que s'han descarregat.
+   */
+  private static int numFoto = 0;
 
-  public static void main(String[] args) {
+  /**
+   * Variable on es desara el patro que s'ha de seguir per obtenir els usuaris i
+   * les contrasenyes de fitxer.
+   */
+  private String patro = null;
+
+  /**
+   * String on es desa la ruta al directori de sortida on s'emmagatzemaran les
+   * fotos descarregades.
+   */
+  private static String dirSortida = "fotos/";
+
+  /**
+   * Mètode principal del programa.
+   * 
+   * @param args
+   *          --> .
+   */
+  public static void main(final String[] args) {
 
     App program = new App();
 
     // Demanem la ruta al fitxer de contrasenyes.
     String rutaFitxer = program.demanarFitxer();
-    
-    //Demanem la ruta de sortida.
-    //dirSortida = program.demanarDirSortida();
+
+    // Demanem la ruta de sortida.
+    // dirSortida = program.demanarDirSortida();
 
     File arxiu = null;
     FileReader fr = null;
@@ -46,6 +72,7 @@ public class App {
       br = new BufferedReader(fr);
 
       program.tractarFitxer(br, mainPage);
+      System.out.println("S'han descarregat " + numFoto + " fotos.");
 
     } catch (FileNotFoundException e) {
       // TODO Auto-generated catch block
@@ -57,7 +84,16 @@ public class App {
     }
   }
 
-  public void tractarFitxer(BufferedReader br, URL mainURL) {
+  /**
+   * Mètode que s'encarrega de tractar el fitxer de contrasenyes. Llegeix el
+   * fitxer, genera el paràmetres de la petició, i envia la petició.
+   * 
+   * @param br
+   *          --> Buffer de lectura del fitxer.
+   * @param mainURL
+   *          --> URL principal de la pàgina.
+   */
+  final void tractarFitxer(final BufferedReader br, final URL mainURL) {
 
     String linia;
     try {
@@ -78,16 +114,26 @@ public class App {
     }
   }
 
-  public String getUsuari(String linia, String patro) {
-    int tipusFitxer = determinarTipusFitxer(patro);
+  /**
+   * Mètode que s'encarrega d'obtenir un usuari a partir d'una linia del fitxer
+   * i un patró de format.
+   * 
+   * @param linia
+   *          --> Linia del fitxer a tractar.
+   * @param patroF
+   *          --> Patró que segueix el fitxer.
+   * @return --> Retorna un String corresponent a l'usuari trobat.
+   */
+  final String getUsuari(final String linia, final String patroF) {
+    int tipusFitxer = determinarTipusFitxer(patroF);
     if (tipusFitxer == 0) {
       int posSeparacio = linia.indexOf(":");
-      if(posSeparacio != -1){
+      if (posSeparacio != -1) {
         return linia.substring(0, posSeparacio);
-      }else{
+      } else {
         return null;
       }
-      
+
     }
     if (tipusFitxer == 1) {
       int posSeparacio = linia.lastIndexOf(":");
@@ -96,42 +142,74 @@ public class App {
       return linia.substring(posSeparacio + 1, linia.length());
 
     } else {
+      System.out.println("Patró incorrecte! No es pot obtenir l'usuari.");
       return null;
     }
 
   }
 
-  public String getContrasenya(String linia, String patro) {
-    int tipusFitxer = determinarTipusFitxer(patro);
+  /**
+   * Mètode que s'encarrega d'obtenir una contrasenya a partir d'una linia del
+   * fitxer i un patró de format.
+   * 
+   * @param linia
+   *          --> Linia del fitxer a tractar.
+   * @param patroF
+   *          --> Patró que segueix el fitxer.
+   * @return --> Retorna un String corresponent a la contrasenya trobada.
+   */
+  final String getContrasenya(final String linia, final String patroF) {
+    int tipusFitxer = determinarTipusFitxer(patroF);
     if (tipusFitxer == 0) {
       int posSeparacio = linia.indexOf(":");
       return linia.substring(posSeparacio + 1, linia.length());
     }
     if (tipusFitxer == 1) {
       int posSeparacio = linia.indexOf(":");
-      System.out.println("PASS---> " + linia.substring(0, posSeparacio));
-      return linia.substring(0, posSeparacio);
+      if (posSeparacio != -1) {
+        System.out.println("PASS---> " + linia.substring(0, posSeparacio));
+        return linia.substring(0, posSeparacio);
+      }
+      return null;
     } else {
-      return "";
+      System.out.println("Patró incorrecte! No es pot obtenir la contrasenya.");
+      return null;
     }
 
   }
 
-  public int determinarTipusFitxer(String patro) {
+  /**
+   * Mètode per determinar el tipus de patró que segueix el fitxer donat.
+   * 
+   * @param patroF
+   *          --> Primera linia (patro) del fitxer.
+   * @return --> Retorna 0 si el fitxer segueix el patró "usuari:contrasenya" o
+   *         1 si el fitxer segueix el patró "contrasenya:població:usuari".
+   */
+  final int determinarTipusFitxer(final String patroF) {
 
-    if (patro.equalsIgnoreCase("usuari : contrasenya")) {
+    if (patroF.equalsIgnoreCase("usuari:contrasenya")) {
       return 0;
     }
-    if (patro.equalsIgnoreCase("contrasenya : població : usuari")) {
+    if (patroF.equalsIgnoreCase("contrasenya:població:usuari")) {
       return 1;
     } else {
-      System.out.println("El fitxer no compleix les condicions d'entrada!");
+
       return -1;
     }
 
   }
 
-  public void generarPeticio(URL mainURL, String urlParameters) {
+  /**
+   * Mètode que s'encarrega de generar la petició a partir de l'URL principal de
+   * la pàgina i els parametres a enviar.
+   * 
+   * @param mainURL
+   *          --> URL principal de la pàgina.
+   * @param urlParameters
+   *          --> Parametres de la petició.
+   */
+  final void generarPeticio(final URL mainURL, final String urlParameters) {
 
     String validationPath = "checklogin.php";
 
@@ -187,14 +265,26 @@ public class App {
     }
   }
 
-  public void descarregarFoto(URL rutaRecurs) {
+  /**
+   * Mètode que s'encarrega de descarreguar una fotografia a partir d'una ruta.
+   * 
+   * @param rutaRecurs
+   *          --> Ruta al recurs.
+   */
+  final void descarregarFoto(final URL rutaRecurs) {
 
-    String dirSortida = "/home/b4tm4n/FOTOS/foto" + numFoto + ".png";
-
+    String nomSortida = "foto" + numFoto + ".png";
+    File directoriSortida = new File(dirSortida);
     BufferedImage image;
     try {
       image = ImageIO.read(rutaRecurs);
-      ImageIO.write(image, "png", new File(dirSortida));
+      if (!directoriSortida.exists()) {
+        directoriSortida.mkdir();
+
+      }
+
+      ImageIO.write(image, "png", new File(directoriSortida + File.separator
+          + nomSortida));
       numFoto++;
     } catch (IOException e) {
       // TODO Auto-generated catch block
@@ -204,8 +294,15 @@ public class App {
 
   }
 
-  public String obtenirRutaRecurs(String linia) {
-    String rutaRecurs = "";
+  /**
+   * Mètode que encarregat de obtenir la ruta d'un recurs a partir d'una línia
+   * del codi HTML de la pàgina.
+   * 
+   * @param linia
+   *          --> Linia del cos de la pàgina de resposta.
+   * @return --> Retorna un String corresponent a la ruta del recurs.
+   */
+  final String obtenirRutaRecurs(final String linia) {
 
     int posInici = linia.indexOf("'") + 1;
     int posFinal = linia.lastIndexOf("'");
@@ -213,13 +310,30 @@ public class App {
     return linia.substring(posInici, posFinal);
   }
 
-  public String generarURLParameters(String user, String pass) {
+  /**
+   * Mètode encarregat de generar la línia de parametres a enviar amb la
+   * petició.
+   * 
+   * @param user
+   *          --> String corresponent a l'usuari.
+   * @param pass
+   *          --> String corresponent a la contrasenya.
+   * @return --> Retorna una linia amb les dades que cal enviar amb la petició.
+   */
+  final String generarURLParameters(final String user, final String pass) {
     String urlParameters = "usuari=" + user + "&contrasenya=" + pass
         + "&Entrar=Entrar";
     return urlParameters;
   }
 
-  public String eliminarEspais(String linia) {
+  /**
+   * Mètode per eliminar els espais de una linia.
+   * 
+   * @param linia
+   *          --> Linia amb espais.
+   * @return --> Retorna la linia sense espais.
+   */
+  final String eliminarEspais(final String linia) {
     char espai = ' ';
     String liniaNeta = "";
     for (int i = 0; i < linia.length(); i++) {
@@ -230,12 +344,18 @@ public class App {
     return liniaNeta;
   }
 
-  public String demanarFitxer() {
+  /**
+   * Mètode per demanar la ruta al fitxer de contrasenyes a l'usuari.
+   * 
+   * @return --> Retorna un String corresponent a la ruta al fitxer de
+   *         contrasenyes.
+   */
+  final String demanarFitxer() {
     Scanner lector = new Scanner(System.in);
     System.out.println("Introdueïx la ruta al fitxer de contrasenyes: ");
     String ruta = lector.nextLine();
     File directori = new File(ruta);
-    while(!directori.exists()){
+    while (!directori.exists()) {
       System.out.println("Fitxer inexistent! Torna-hi: ");
       ruta = lector.nextLine();
       directori = new File(ruta);
@@ -243,13 +363,20 @@ public class App {
     lector.close();
     return ruta;
   }
-  
-  public String demanarDirSortida() {
+
+  /**
+   * Mètode per demanar a l'usuari el directori de sortida de les fotos que es
+   * descarreguin.
+   * 
+   * @return --> Retorna un String corresponent a la ruta de sortida de les
+   *         fotos.
+   */
+  final String demanarDirSortida() {
     Scanner lector = new Scanner(System.in);
     System.out.println("A on vols desar les fotos?");
     String ruta = lector.nextLine();
     File directori = new File(ruta);
-    while(!directori.exists()){
+    while (!directori.exists()) {
       System.out.println("Aquest directori no existeix! Torna-hi: ");
       ruta = lector.nextLine();
       directori = new File(ruta);
